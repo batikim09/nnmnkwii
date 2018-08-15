@@ -275,18 +275,22 @@ def load_labels_with_state_alignment(hts_labels,
     else:
         label_feature_matrix = np.empty((hts_labels.num_phones(), dimension))
 
+    #print("DEBUG: new label_feature_matrix", label_feature_matrix.shape)
+    #print("DEBUG: subphone features", subphone_features)
     label_feature_index = 0
     state_number = hts_labels.num_states()
 
     if subphone_features == "coarse_coding":
         cc_features = compute_coarse_coding_features()
 
+    total_frame_number = 0
     phone_duration = 0
     state_duration_base = 0
     for current_index, (start_time, end_time,
                         full_label) in enumerate(hts_labels):
         # remove state information [k]
         assert full_label[-1] == "]"
+        #print("DEBUG: current_index ", current_index)
         full_label_length = len(full_label) - 3
         state_index = full_label[full_label_length + 1]
 
@@ -294,7 +298,8 @@ def load_labels_with_state_alignment(hts_labels,
         state_index_backward = state_number + 1 - state_index
         full_label = full_label[0:full_label_length]
 
-        frame_number = (end_time - start_time) // frame_shift_in_micro_sec
+        frame_number = int(end_time/frame_shift_in_micro_sec) - int(start_time/frame_shift_in_micro_sec)
+        total_frame_number += frame_number
 
         if state_index == 1:
             current_frame_number = 0
@@ -322,6 +327,9 @@ def load_labels_with_state_alignment(hts_labels,
         if add_frame_features:
             current_block_binary_array = np.zeros(
                 (frame_number, dict_size + frame_feature_size))
+
+            #print("DEBUG: current_block_binary_array", current_block_binary_array.shape)
+
             for i in range(frame_number):
                 current_block_binary_array[i,
                                            0: dict_size] = label_vector
@@ -407,8 +415,20 @@ def load_labels_with_state_alignment(hts_labels,
                 else:
                     assert False
 
-            label_feature_matrix[label_feature_index:label_feature_index +
-                                 frame_number] = current_block_binary_array
+            
+            #print("DEBUG: label_feature_index ", label_feature_index)
+            #print("DEBUG: frame_number ", frame_number)
+            #print("DEBUG: slot ", label_feature_matrix[label_feature_index:label_feature_index + frame_number].shape)
+
+            if label_feature_index + frame_number > hts_labels.num_frames():
+                print("\nDEBUG: the number of frames from the label file is not equal to the accumulated one: %s" %(hts_labels.path))
+                print("DEBUG: this label file might have some overlaps between frames.")
+                
+            #label_feature_matrix[label_feature_index:label_feature_index + frame_number] = current_block_binary_array
+            frame_start_index = int(start_time/frame_shift_in_micro_sec)
+            #print("DEBUG: frame_start_index ", frame_start_index)
+            label_feature_matrix[frame_start_index:frame_start_index + frame_number] = current_block_binary_array
+
             label_feature_index = label_feature_index + frame_number
         elif subphone_features == 'state_only' and state_index == state_number:
             # TODO: this pass seems not working
@@ -436,6 +456,9 @@ def load_labels_with_state_alignment(hts_labels,
     if label_feature_index == 0:
         raise ValueError("Combination of subphone_features and add_frame_features is not supported: {}, {}".format(
             subphone_features, add_frame_features))
+
+    #if add_frame_features:
+    #    assert total_frame_number == hts_labels.num_frames()
 
     label_feature_matrix = label_feature_matrix[0:label_feature_index, ]
     return label_feature_matrix

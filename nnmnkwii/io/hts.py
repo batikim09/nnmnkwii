@@ -171,6 +171,8 @@ J:13+9-2[2]')
                 directry from it instead of loading a file.
         """
         assert path is not None or lines is not None
+        self.path = path
+        
         if lines is None:
             with open(path) as f:
                 lines = f.readlines()
