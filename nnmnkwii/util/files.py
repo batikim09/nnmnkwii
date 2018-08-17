@@ -9,7 +9,6 @@ import numpy as np
 from glob import glob
 from os.path import join
 
-
 def example_label_file(phone_level=False):
     """Get path of example HTS-style full-context lable file.
 

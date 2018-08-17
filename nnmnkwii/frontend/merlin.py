@@ -47,15 +47,15 @@ import math
 
 from nnmnkwii.io import hts
 
-def nan_check(name, h):
+def nan_check_np(name, h):
     if h is not None:
         
-        if math.isnan(h.data.abs().mean()):
+        if np.isnan(h).any():
             print("NaN bug!")            
             print("%s...........mean %f"% (name, np.mean(h)))
             print("%s...........sum %f"% (name, np.sum(h)))
             print(h)
-            print("shape: ", h.shape())
+            print("shape: ", h.shape)
             return True
     return False
 
@@ -428,13 +428,14 @@ def load_labels_with_state_alignment(hts_labels,
                     assert False
 
             
-            
-            if nan_check("current_block_binary_array", current_block_binary_array):
+            '''
+            if nan_check_np("current_block_binary_array", current_block_binary_array):
                 print("\nDEBUG: nan feature! %s" %(hts_labels.path)) 
                 print("DEBUG: label_feature_index ", label_feature_index)
                 print("DEBUG: frame_number ", frame_number)
                 print("DEBUG: slot ", label_feature_matrix[label_feature_index:label_feature_index + frame_number].shape)
                 assert False
+            '''
 
             if label_feature_index + frame_number > hts_labels.num_frames():
                 print("\nDEBUG: the number of frames from the label file is not equal to the accumulated one: %s" %(hts_labels.path))

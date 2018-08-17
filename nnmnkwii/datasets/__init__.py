@@ -5,7 +5,7 @@ import numpy as np
 from collections import OrderedDict
 from warnings import warn
 from tqdm import tqdm
-
+import sys
 
 class FileDataSource(object):
     """File data source interface.
@@ -321,6 +321,7 @@ class MemoryCacheDataset(Dataset):
         if len(self.cached_utterances) > self.cache_size:
             self.cached_utterances.popitem(last=False)
 
+        #print("DEBUG: chached_utterance[%d]=%s" %(utt_idx, self.dataset.collected_files[utt_idx]))
         return self.cached_utterances[utt_idx]
 
     def __len__(self):
@@ -371,9 +372,13 @@ class MemoryCacheFramewiseDataset(MemoryCacheDataset):
 
     def __init__(self, dataset, lengths, cache_size=777):
         super(MemoryCacheFramewiseDataset, self).__init__(dataset, cache_size)
+        self.collected_files = dataset.collected_files
         self.lengths = lengths
         self.cumsum_lengths = np.hstack((0, np.cumsum(lengths)))
         self.n_frames = np.sum(lengths)
+        
+
+        
         assert hasattr(self, "dataset")
         assert hasattr(self, "cached_utterances")
         assert hasattr(self, "cache_size")
@@ -382,9 +387,25 @@ class MemoryCacheFramewiseDataset(MemoryCacheDataset):
         # 0-origin
         utt_idx = np.argmax(self.cumsum_lengths > frame_idx) - 1
         frames = super(MemoryCacheFramewiseDataset, self).__getitem__(utt_idx)
-        frame_idx_in_focused_utterance = frame_idx - \
-            self.cumsum_lengths[utt_idx]
+        frame_idx_in_focused_utterance = frame_idx - self.cumsum_lengths[utt_idx]
+
         return frames[frame_idx_in_focused_utterance]
+        '''
+        try:
+            return frames[frame_idx_in_focused_utterance]
+        except IndexError as e:            
+            print("DEBUG: ", e)
+            print("DEBUG: utt_idx", utt_idx)
+            print("DEBUG: utterance: ", self.collected_files[utt_idx])
+            print("DEBUG: frame_idx", frame_idx)
+            print("DEBUG: cumsum_lengths[%d]=%d" %(utt_idx, self.cumsum_lengths[utt_idx]))
+            print("DEBUG: frame_idx_in_focused_utterance", frame_idx_in_focused_utterance)
+            print("DEBUG: lengths", self.lengths)
+            print("DEBUG: length[%d]=%d"% (utt_idx, self.lengths[utt_idx]))
+            print("DEBUG: cumsum_lengths", self.cumsum_lengths)
+            print("DEBUG: n_frames", self.n_frames)          
+            sys.exit(-1)
+        '''
 
     def __getitem__(self, frame_idx):
         if isinstance(frame_idx, slice):

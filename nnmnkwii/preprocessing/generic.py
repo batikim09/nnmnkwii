@@ -2,10 +2,23 @@
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
+import sys
+
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.preprocessing.data import _handle_zeros_in_scale
 from scipy import signal
 
+def nan_check_np(name, h):
+    if h is not None:
+        
+        if np.isnan(h).any():
+            print("NaN bug!")            
+            print("%s...........mean %f"% (name, np.mean(h)))
+            print("%s...........sum %f"% (name, np.sum(h)))
+            print(h)
+            print("shape: ", h.shape)
+            return True
+    return False
 
 def _sign(x):
     isnumpy = isinstance(x, np.ndarray)
@@ -497,10 +510,21 @@ def meanvar(dataset, lengths=None, mean_=0., var_=0.,
     for idx, x in enumerate(dataset):
         if lengths is not None:
             x = x[:lengths[idx]]
+
+        #for each utterance
         mean_, var_, _ = _incremental_mean_and_var(
             x, mean_, var_, last_sample_count)
         last_sample_count += len(x)
+
+        '''
+        if nan_check_np("mean_" + str(idx), mean_) or nan_check_np("var_" + str(idx), var_):
+            print("DEBUG: %d utterance: %s has nan or inf mean/var." %(idx, dataset.collected_files[idx]))
+            sys.exit(-1)
+        '''
+
     mean_, var_ = mean_.astype(dtype), var_.astype(dtype)
+    
+    
 
     if return_last_sample_count:
         return mean_, var_, last_sample_count
@@ -731,6 +755,8 @@ def minmax_scale(x, data_min=None, data_max=None, feature_range=(0, 1),
         scale_ = __minmax_scale_factor(data_min, data_max, feature_range)
     if min_ is None:
         min_ = feature_range[0] - data_min * scale_
+
+    #print("DEBUG: scale: ", scale_)
     return x * scale_ + min_
 
 
