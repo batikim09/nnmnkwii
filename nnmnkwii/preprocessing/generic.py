@@ -600,15 +600,34 @@ def minmax(dataset, lengths=None):
         >>> lengths = [len(x) for x in X]
         >>> data_min, data_max = minmax(X, lengths)
     """
+    #max_ = -np.inf
+    #min_ = np.inf
     max_ = -np.inf
     min_ = np.inf
 
     for idx, x in enumerate(dataset):
         if lengths is not None:
             x = x[:lengths[idx]]
-        min_ = np.minimum(min_, np.min(x, axis=(0,)))
-        max_ = np.maximum(max_, np.max(x, axis=(0,)))
 
+        t_min = np.min(x, axis=(0,))
+        t_max = np.max(x, axis=(0,))
+        
+        min_ = np.minimum(min_, t_min)
+        max_ = np.maximum(max_, t_max)
+        '''
+        if (x[:,0] > 1.0).any():
+            print(dataset.collected_files[idx])
+            print("DEBUG: t_min: ", t_min)
+            print("DEBUG: t_max: ", t_max)
+            print("DEBUG: min: ", min_)
+            print("DEBUG: max: ", max_)
+            print(x.shape)
+            idx = np.where(x[:,0] > 1.0)
+            print(x[idx])
+            assert False
+        '''
+        
+    
     return min_, max_
 
 

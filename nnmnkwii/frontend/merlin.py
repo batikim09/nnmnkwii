@@ -282,10 +282,13 @@ def load_labels_with_state_alignment(hts_labels,
     dimension = frame_feature_size + dict_size
 
     assert isinstance(hts_labels, hts.HTSLabelFile)
+    '''
     if add_frame_features:
         label_feature_matrix = np.empty((hts_labels.num_frames(), dimension))
     else:
         label_feature_matrix = np.empty((hts_labels.num_phones(), dimension))
+    '''
+    label_feature_matrix = np.empty((100000, dimension))
 
     #print("DEBUG: new label_feature_matrix", label_feature_matrix.shape)
     #print("DEBUG: subphone features", subphone_features)
@@ -441,11 +444,12 @@ def load_labels_with_state_alignment(hts_labels,
                 print("\nDEBUG: the number of frames from the label file is not equal to the accumulated one: %s" %(hts_labels.path))
                 print("DEBUG: this label file might have some overlaps between frames.")
                 
-            #label_feature_matrix[label_feature_index:label_feature_index + frame_number] = current_block_binary_array
+            label_feature_matrix[label_feature_index:label_feature_index + frame_number] = current_block_binary_array
+            '''
             frame_start_index = int(start_time/frame_shift_in_micro_sec)
-            #print("DEBUG: frame_start_index ", frame_start_index)
+            print("DEBUG: frame_start_index ", frame_start_index)
             label_feature_matrix[frame_start_index:frame_start_index + frame_number] = current_block_binary_array
-
+            '''
             label_feature_index = label_feature_index + frame_number
         elif subphone_features == 'state_only' and state_index == state_number:
             # TODO: this pass seems not working
@@ -477,7 +481,8 @@ def load_labels_with_state_alignment(hts_labels,
     #if add_frame_features:
     #    assert total_frame_number == hts_labels.num_frames()
 
-    label_feature_matrix = label_feature_matrix[0:label_feature_index, ]
+    #label_feature_matrix = label_feature_matrix[0:label_feature_index, ]
+    label_feature_matrix = label_feature_matrix[0:hts_labels.num_frames(), ]
     return label_feature_matrix
 
 
